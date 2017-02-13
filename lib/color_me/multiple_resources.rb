@@ -13,8 +13,24 @@ module ColorMe
       end
     end
 
+    def put(params=[0,""])
+      case params.first
+      when Fixnum
+        return put_with_id(params)
+      else
+        raise "no Fixnum params"
+      end
+    end
+
+    def method_missing(method, *args)
+      if method.match(/^(.*)_with_id/)
+        action_with_id(args.first, $1)
+      end
+    end
+    
     private
 
+    
     def get_with_params(params)
       res = partial_get(params)
       total = [res[:meta][:total], params[:limit]].reject(&:nil?).min
@@ -29,17 +45,34 @@ module ColorMe
     end
 
     def partial_get(params={})
-      get_url(endpoint + ColorMe.build_query(params))
+      action_url(endpoint + ColorMe.build_query(params))
     end
 
-    def get_with_id(id)
+    def endpoint_with_id(id)
       dirname  = File.join(File.dirname(endpoint), File.basename(endpoint, ".*"))
       filename = id.to_s + File.extname(endpoint)
-      get_url(File.join(dirname, filename))
+      File.join(dirname, filename)
+    end
+    
+    def action_with_id(params, method = "get")
+      case method
+      when "get"
+        action_url(endpoint_with_id(params), method)
+      when "put"
+        action_url(endpoint_with_id(params.first), method, params[1])
+      end
+
     end
 
-    def get_url(url)
-      res = ColorMe.api.get(url)
+
+    
+    def action_url(url, method = "get", params = nil)
+      if params.nil?
+        res = ColorMe.api.send(method, url)        
+      else
+        res = ColorMe.api.send(method, url, {params: params})
+      end
+
       ColorMe.parse_json(res.body)
     end
   end
