@@ -7,6 +7,7 @@ require "color_me/sales"
 require "color_me/products"
 require "color_me/categories"
 require "color_me/payments"
+require "color_me/deliveries"
 
 module ColorMe
   def token=(token)
